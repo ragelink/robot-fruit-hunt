@@ -3,7 +3,7 @@
 var SimpleBot = {
     makeMove: function() {
        // to disable to opponent, uncomment the next line
-       // return PASS;
+       return PASS;
 
        SimpleBot.board = get_board();
 
