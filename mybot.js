@@ -1,109 +1,73 @@
-//
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
-//  Submission for FruitBot Challenge - Scribd
-//  Author: Leo Mata <ragelink@ragelink.com>
-//  
-//  Additional Disclaimer... my JS is primeval to say the least ;-)
+// mybot.js submission by Leo Mata 
 
+var moves = [NORTH, SOUTH, EAST, WEST];
 
-function baseline_tally(){
-   // x=0 type, x=1 count/type, x=2 my count, x=3 oposition counts, x=4 priority
-   var tally[][];
-   for (var y = 0; y < get_number_of_item_types(); y +=1){
-      tally[0][y] = y;
-      tally[1][y] = get_total_item_count(y);
-      tally[2][y] = get_my_item_count(y);
-      tally[3][y] = get_opponent_item_count(y);
-      tally[4][y] = 0; // clearout priority on recalc to force reprioritization
-   }
-   return tally;
-}
-
-function prioritize_by_count(tally){
-   for (var y = 0; y < tally[0].length; y +=1){
-      //cheap math to figure out if cat is won ie half
-      midpoint = get_total_item_count(y)/2;
-      //increase priority on losing or matching fruit types
-      if (tally[2][y] <= tally[3][y]){
-         tally[5][y]++;
-      }
-      //completely deprioritize fruit categories in which I cannot win
-      if (get_opponent_item_count(y) == get_total_item_count(y)){
-         tally[4][y]=0;
-      } else if (get_opponent_item_count(y) > midpoint) {
-         tally[4][y]=0;
-      }
-      //completely deprioritize fruit categories in which I have won
-      if (get_my_item_count(y) == get_total_item_count(y)){
-         tally[4][y]=0;
-      } else if (get_my_item_count(y) > midpoint) {
-         tally[4][y]=0;
-      }  
-      return tally; 
-   }
-}
-
-function map_fruits(board){
-   var array[];
-   for (var x=0; x < board.length; x+=1){
-      for (var y=0; y < board[x].length; y+=1){
-         if (board[x][y]>=0){
-            fruit = new Object();
-            fruit.type=board[x][y];
-            fruit.x=x;
-            fruit.y=y;
-            fruit.priority=0;
-            array.push(fruit);
-         }
-      }
-   } 
-   return array
-}
-
-   var board = get_board();
-   var tally = update_tallies(board);
-   var x = get_my_x();
-   var y = get_my_y();
-   var opx = get_oppponent_x();
-   var opy = get_oppponent_x();
+function new_game() { }
 
 function make_move() {
+   var board = get_board();
+   var fruits = tally();
+   var tmp_coords = [0,0]
+   var closest = 1000;
+   var priorities = [];
 
-   // if item is found take it ZOMGZ!!!! 
-   if (board[get_my_x()][get_my_y()] > 0) {
-       return TAKE;
+   // we found an item! take it!
+   if (board[get_my_x()][get_my_y()] > 0) { return TAKE; }
+
+   //navigate board and pick best chance to win
+   for (var i = 0; i < board.length; i+=1){
+      for (var j = 0; j < board[i].length; j+=1){
+         var num = board[i][j];
+         //validate if fruit in spot
+         if (num > 0) {
+            // category not lost proceed to engage
+            if (fruits[num][4] == 0) {
+               //calculate linear distance
+               var dist_from_me = distance(i,j,get_my_x(),get_my_y());
+               if (dist_from_me < closest) {
+                  closest = dist_from_me;
+                  closest_coords = [i,j];
+               }
+             }
+         }
+      }
+   }
+   
+   var tmp_abs_x = Math.abs(closest_coords[0] - get_my_x());
+   var tmp_abs_y = Math.abs(closest_coords[1] - get_my_y());
+   if (tmp_abs_x > tmp_abs_y){
+      if ((closest_coords[0]>get_my_x()) && get_my_x()<WIDTH) { return EAST;}
+      if ((closest_coords[0]<get_my_x()) && get_my_x()>0) { return WEST;}
+   } else {
+      if ((closest_coords[1]>get_my_y()) && get_my_y()<HEIGHT) { return SOUTH;}
+      if ((closest_coords[1]<get_my_y()) && get_my_y()>0) { return NORTH;}
    }
 
-   var rand = 0;
-   if (rand < 1) return NORTH;
-   if (rand < 2) return SOUTH;
-   if (rand < 3) return EAST;
-   if (rand < 4) return WEST;
    return PASS;
 }
 
-
-function next_fruit(fruits){
-  var board = get_board();
-  var prioritized_board = [];
-  
-  for (var x = 0, xlen = board.length; x < len; x += 1) {
-    for (var y = 0, ylen = board[x].length; y < ylen; y += 1) {
-      if(board[x][y] > 0) {
-        var skip = false;
-        
-    }
-  }
+function distance(x1,y1,x2,y2){
+   //calculate distance between two points
+   var dist = Math.abs(y2-y1) + Math.abs(x2-x1)
+   return dist   
 }
+
+function tally(){
+   // 0-type, 1-total/type, 2-mePicked/type, 3-oppPicked/type, 4 lostcat?
+      var fruits = [];
+      var lostcat = false; 
+   for (var x = 1; x < get_number_of_item_types()+1; x +=1){
+      fruits[x] = [];
+      fruits[x].push(x);
+      fruits[x].push(get_total_item_count(x));
+      fruits[x].push(get_my_item_count(x));
+      fruits[x].push(get_opponent_item_count(x));
+      var midpoint = get_total_item_count(x)/2;
+      if (fruits[x][3] == fruits[x][1]) { lostcat = true; }
+      if (fruits[x][3] > midpoint) { lostcat = true; }
+      if (lostcat) { fruits[x].push(1); } else { fruits[x].push(0);} 
+   }
+   return fruits;
+}
+
+
