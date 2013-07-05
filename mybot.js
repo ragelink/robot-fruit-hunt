@@ -20,8 +20,8 @@ function make_move() {
          var num = board[i][j];
          //validate if fruit in spot
          if (num > 0) {
-            // category not lost proceed to engage
-            if (fruits[num][4] == 0) {
+            // category not lost or won proceed to engage
+            if ((fruits[num][4] == 0) && (fruits[num][5] ==0)) {
                //calculate linear distance
                var dist_from_me = distance(i,j,get_my_x(),get_my_y());
                if (dist_from_me < closest) {
@@ -53,9 +53,10 @@ function distance(x1,y1,x2,y2){
 }
 
 function tally(){
-   // 0-type, 1-total/type, 2-mePicked/type, 3-oppPicked/type, 4 lostcat?
+   // 0-type, 1-total/type, 2-mePicked/type, 3-oppPicked/type, 4 lostcat? 5 woncat
       var fruits = [];
       var lostcat = false; 
+      var woncat = false; 
    for (var x = 1; x < get_number_of_item_types()+1; x +=1){
       fruits[x] = [];
       fruits[x].push(x);
@@ -63,9 +64,16 @@ function tally(){
       fruits[x].push(get_my_item_count(x));
       fruits[x].push(get_opponent_item_count(x));
       var midpoint = get_total_item_count(x)/2;
-      if (fruits[x][3] == fruits[x][1]) { lostcat = true; }
+
+      // evaluate if friut cat has been lost if so ignore
       if (fruits[x][3] > midpoint) { lostcat = true; }
+      if (fruits[x][3] == fruits[x][1]) { lostcat = true; }
       if (lostcat) { fruits[x].push(1); } else { fruits[x].push(0);} 
+
+      // evaluate if friut cat has been won if so ignore
+      if (fruits[x][2] > midpoint) { woncat = true; }
+      if (fruits[x][2] == fruits[x][1]) { woncat = true; }
+      if (woncat) { fruits[x].push(1); } else { fruits[x].push(0);} 
    }
    return fruits;
 }
